@@ -4,3 +4,5 @@ a detection network use
                        CliqueNet 
                        ScaleFPN 
                        Attention
+
+Now!!!it combine with my another work CliqueFPN as one work!!!
