@@ -11,7 +11,7 @@ class CliqueFPN():
     MEAN = [103.94, 116.78, 123.68]
     NORMALIZER = 0.017
     
-    def __init__(self,num_classes,num_anchors,batch_size,max_box_per_image,max_grid,ignore_thresh=0.6,learning_rate=0.0001):
+    def __init__(self,num_classes,num_anchors,batch_size,max_box_per_image,max_grid,ignore_thresh=0.6,learning_rate=0.000001):
         self.num_classes = num_classes
         self.num_anchors = num_anchors
         self.batch_size = batch_size
@@ -197,7 +197,7 @@ class CliqueFPN():
             
             return infos
         
-        anchors = [[190,212, 245,348, 321,150, 343,256, 372,379],[84,86, 108,162, 109,288, 162,329, 174,103],[18,27, 28,75, 49,132, 55,43, 65,227]]
+        anchors = [[240,173, 257,326, 412,412],[106,85, 137,151, 145,269],[33,36, 53,69, 71,144]]
         
         #input_mask = tf.ones_like(self.input_image)#none,none,none,3
         #net_h = tf.cast(tf.reduce_sum(input_mask)/tf.reduce_sum(input_mask,axis=[0,2,3])[0],tf.int32)#net_h = none
@@ -276,17 +276,17 @@ class CliqueFPN():
                 self.y_out_argmax = tf.cast(tf.argmax(self.y_out_softmax, axis=-1),tf.int32)
                 self.accuracy = tf.reduce_mean(tf.cast(tf.equal(self.y, self.y_out_argmax), tf.float32))
 
-                with tf.name_scope('train-summary-per-iteration'):
-                    tf.summary.scalar('loss', self.all_loss)
-                    tf.summary.scalar('acc', self.accuracy)
-                    self.summaries_merged = tf.summary.merge_all()
+                #with tf.name_scope('train-summary-per-iteration'):
+                    #tf.summary.scalar('loss', self.all_loss)
+                    #tf.summary.scalar('acc', self.accuracy)
+                    #self.summaries_merged = tf.summary.merge_all()
             elif Detection_or_Classifier=='detection':
                 self.loss_yolo_1,class_loss_1,recall50_1,recall75_1,class_acc_1,avg_obj_1,avg_noobj_1,count_1,count_noobj_1 = self.loss(1,[self.input_image, self.pred_yolo_1, self.true_yolo_1, self.true_boxes],
-                                              self.anchors[:,20:], [1*num for num in self.max_grid], self.ignore_thresh)
+                                              self.anchors[:,12:], [1*num for num in self.max_grid], self.ignore_thresh)
                 self.loss_yolo_2,class_loss_2,recall50_2,recall75_2,class_acc_2,avg_obj_2,avg_noobj_2,count_2,count_noobj_2 = self.loss(2,[self.input_image, self.pred_yolo_2, self.true_yolo_2, self.true_boxes],
-                                              self.anchors[:,10:20], [1*num for num in self.max_grid], self.ignore_thresh)
+                                              self.anchors[:,6:12], [1*num for num in self.max_grid], self.ignore_thresh)
                 self.loss_yolo_3,class_loss_3,recall50_3,recall75_3,class_acc_3,avg_obj_3,avg_noobj_3,count_3,count_noobj_3 = self.loss(4,[self.input_image, self.pred_yolo_3, self.true_yolo_3, self.true_boxes],
-                                              self.anchors[:,:10], [1*num for num in self.max_grid], self.ignore_thresh)
+                                              self.anchors[:,:6], [1*num for num in self.max_grid], self.ignore_thresh)
                 self.all_loss = tf.reduce_mean(self.loss_yolo_1+self.loss_yolo_2+self.loss_yolo_3+class_loss_1+class_loss_2+class_loss_3) + regularzation_loss + orth_constraint_loss
                 
                 update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
@@ -295,16 +295,16 @@ class CliqueFPN():
                     self.optimizer = tf.train.AdamOptimizer(learning_rate)
                     self.train_op = self.optimizer.minimize(self.all_loss)
                 
-                with tf.name_scope('train-summary-per-iteration'):
-                    tf.summary.scalar('loss', tf.cast(self.all_loss,tf.float32))
-                    tf.summary.scalar('recall50',(recall50_1*count_1+recall50_2*count_2+recall50_3*count_3)/(count_1+count_2+count_3+1e-3) )
-                    tf.summary.scalar('recall75',(recall75_1*count_1+recall75_2*count_2+recall75_3*count_3)/(count_1+count_2+count_3+1e-3))
-                    tf.summary.scalar('class_accury',(class_acc_1*count_1+class_acc_2*count_2+class_acc_3*count_3)/(count_1+count_2+count_3+1e-3))
-                    tf.summary.scalar('avg obj accuracy',(avg_obj_1*count_1+avg_obj_2*count_2+avg_obj_3*count_3)/(count_1+count_2+count_3+1e-3))
-                    tf.summary.scalar('avg no obj accuracy',(avg_noobj_1*count_1+avg_noobj_2*count_2+avg_noobj_3*count_3)/(count_1+count_2+count_3+1e-3))
-                    tf.summary.scalar('obj count',(count_1+count_2+count_3))
-                    tf.summary.scalar('no obj count',(count_noobj_2+count_noobj_2+count_noobj_3))
-                    self.summaries_merged = tf.summary.merge_all()
+                #with tf.name_scope('train-summary-per-iteration'):
+                    #tf.summary.scalar('loss', tf.cast(self.all_loss,tf.float32))
+                    #tf.summary.scalar('recall50',(recall50_1*count_1+recall50_2*count_2+recall50_3*count_3)/(count_1+count_2+count_3+1e-3) )
+                    #tf.summary.scalar('recall75',(recall75_1*count_1+recall75_2*count_2+recall75_3*count_3)/(count_1+count_2+count_3+1e-3))
+                    #tf.summary.scalar('class_accury',(class_acc_1*count_1+class_acc_2*count_2+class_acc_3*count_3)/(count_1+count_2+count_3+1e-3))
+                    #tf.summary.scalar('avg obj accuracy',(avg_obj_1*count_1+avg_obj_2*count_2+avg_obj_3*count_3)/(count_1+count_2+count_3+1e-3))
+                    #tf.summary.scalar('avg no obj accuracy',(avg_noobj_1*count_1+avg_noobj_2*count_2+avg_noobj_3*count_3)/(count_1+count_2+count_3+1e-3))
+                    #tf.summary.scalar('obj count',(count_1+count_2+count_3))
+                    #tf.summary.scalar('no obj count',(count_noobj_2+count_noobj_2+count_noobj_3))
+                    #self.summaries_merged = tf.summary.merge_all()
     def loss(self,scale,x,anchors, max_grid,ignore_thresh):
         def focal_loss(prediction_tensor, target_tensor, weights=None, alpha=0.25, gamma=2):
             sigmoid_p = tf.nn.sigmoid(prediction_tensor)
@@ -611,7 +611,7 @@ def Transition(name,x,use_decoupled=True,norm='group_norm',activate='selu',is_tr
         
         x = _B_conv_block('_B_conv_block',x,C//2,1,1,'SAME',use_decoupled,norm,activate,is_training)
         
-        x = Attention('Attention',x,use_decoupled,norm,activate,is_training)
+        x = Attention('Attention',x,False,norm,activate,is_training)
         
         x = tf.nn.max_pool(x,[1,2,2,1],[1,2,2,1],'SAME')
         #x = Dpp('Dpp',x)
@@ -643,9 +643,9 @@ def Dpp(name,Iq):
 def PrimaryConv(name,x,use_decoupled=True,norm='group_norm',activate='selu',is_training=True):
     with tf.variable_scope(name):
         #none,none,none,3
-        x = _conv_block('conv_0',x,64,3,2,'SAME',norm,activate,is_training)#none,none/2,none/2,64
-        x = _conv_block('conv_1',x,64,3,1,'SAME',norm,activate,is_training)#none,none/2,none/2,64
-        x = _conv_block('conv_2',x,128,3,1,'SAME',norm,activate,is_training)#none,none/2,none/2,128
+        x = _conv_block('conv_0',x,64,3,2,'SAME',use_decoupled,norm,activate,is_training)#none,none/2,none/2,64
+        x = _conv_block('conv_1',x,64,3,1,'SAME',use_decoupled,norm,activate,is_training)#none,none/2,none/2,64
+        x = _conv_block('conv_2',x,128,3,1,'SAME',use_decoupled,norm,activate,is_training)#none,none/2,none/2,128
         
         x = tf.nn.max_pool(x,[1,4,4,1],[1,2,2,1],'SAME')
         
@@ -873,9 +873,9 @@ def Attention(name,x,use_decoupled=True,norm='group_norm',activate='selu',is_tra
 def SelfAttention(name,x,use_decoupled=True,norm='group_norm',activate='selu',is_training=True):
     with tf.variable_scope(name):
         C = x.get_shape().as_list()[-1]
-        f = _B_conv_block('f',x,C//8,1,1,'SAME',norm,activate,is_training)
-        g = _B_conv_block('g',x,C//8,1,1,'SAME',norm,activate,is_training)
-        h = _B_conv_block('h',x,C,1,1,'SAME',norm,activate,is_training)
+        f = _B_conv_block('f',x,C//8,1,1,'SAME',use_decoupled,norm,activate,is_training)
+        g = _B_conv_block('g',x,C//8,1,1,'SAME',use_decoupled,norm,activate,is_training)
+        h = _B_conv_block('h',x,C,1,1,'SAME',use_decoupled,norm,activate,is_training)
         
         s = tf.matmul(tf.reshape(g,[tf.shape(g)[0],-1,tf.shape(g)[-1]]), tf.reshape(f,[tf.shape(f)[0],-1,tf.shape(f)[-1]]), transpose_b=True) # # [bs, N, N]
 
@@ -895,8 +895,8 @@ def SE(name,x,use_decoupled=True,norm='group_norm',activate='selu',is_training=T
         C = x.get_shape().as_list()[-1]
         #SEnet channel attention
         weight_c = tf.reduce_mean(x,[1,2],keep_dims=True)#none,1,1,C
-        weight_c = _B_conv_block('conv_1',weight_c,C//16,1,1,'SAME',use_decoupled,None,activate,is_training)
-        weight_c = _B_conv_block('conv_2',weight_c,C,1,1,'SAME',use_decoupled,None,activate,is_training)
+        weight_c = _B_conv_block('conv_1',weight_c,C//16,1,1,'SAME',False,None,activate,is_training)
+        weight_c = _B_conv_block('conv_2',weight_c,C,1,1,'SAME',False,None,activate,is_training)
         
         weight_c = tf.nn.sigmoid(weight_c)#none,1,1,C
         

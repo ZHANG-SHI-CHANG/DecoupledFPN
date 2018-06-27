@@ -30,10 +30,10 @@ test_every = 1
 is_train = True
 
 ##############################################
-anchors = [18,27, 28,75, 49,132, 55,43, 65,227, 84,86, 108,162, 109,288, 162,329, 174,103, 190,212, 245,348, 321,150, 343,256, 372,379]
+anchors = [33,36, 53,69, 71,144, 106,85, 137,151, 145,269, 240,173, 257,326, 412,412]
 max_box_per_image = 60
 min_input_size = 32*7
-max_input_size = 32*11
+max_input_size = 32*10
 batch_size = 4
 ignore_thresh = 0.6
 
@@ -83,7 +83,7 @@ class Train:
             
             print("Building the model...")
             self.model = CliqueFPN(num_classes=len(self.labels),
-                                  num_anchors=5,
+                                  num_anchors=3,
                                   batch_size = batch_size,
                                   max_box_per_image = max_box_per_image,
                                   max_grid=[max_input_size,max_input_size],
@@ -93,13 +93,14 @@ class Train:
             
         elif Detection_or_Classifier=='detection':
             train_ints, valid_ints, self.labels = create_training_instances(
-            self.dataset_root+'VOC2012/Annotations/',
-            self.dataset_root+'VOC2012/JPEGImages/',
+            self.dataset_root+'Fish/Annotations/',
+            self.dataset_root+'Fish/JPEGImages/',
             'data.pkl',
             '','','',
-            ['person','head','hand','foot','aeroplane','tvmonitor','train','boat','dog','chair',
-             'bird','bicycle','bottle','sheep','diningtable','horse','motorbike','sofa','cow',
-             'car','cat','bus','pottedplant']
+            ['heidiao','niyu','lvqimamiantun','hualu','heijun','dalongliuxian','tiaoshiban']
+            #['person','head','hand','foot','aeroplane','tvmonitor','train','boat','dog','chair',
+            # 'bird','bicycle','bottle','sheep','diningtable','horse','motorbike','sofa','cow',
+            # 'car','cat','bus','pottedplant']
             )
             self.train_data = BatchGenerator(
                                             instances           = train_ints, 
@@ -130,7 +131,7 @@ class Train:
             
             print("Building the model...")
             self.model = CliqueFPN(num_classes=len(self.labels),
-                                  num_anchors=5,
+                                  num_anchors=3,
                                   batch_size = batch_size,
                                   max_box_per_image = max_box_per_image,
                                   max_grid=[max_input_size,max_input_size],
@@ -145,7 +146,7 @@ class Train:
         var = tf.global_variables()
         var_list = [val for val in var]
         if Detection_or_Classifier=='detection' and False:
-            var_list = [val for val in var if 'CliqueBlock_2/loop/deform_conv' not in val.name ]
+            var_list = [val for val in var if 'PrimaryConv/conv_0/batchnorm' not in val.name and 'PrimaryConv/conv_1/batchnorm' not in val.name and 'PrimaryConv/conv_2/batchnorm' not in val.name and 'PrimaryConv/conv_0/DecoupledOperator' not in val.name and 'PrimaryConv/conv_1/DecoupledOperator' not in val.name and 'PrimaryConv/conv_2/DecoupledOperator' not in val.name and 'PrimaryConv/conv_0/prelu' not in val.name and 'PrimaryConv/conv_1/prelu' not in val.name and 'PrimaryConv/conv_2/prelu' not in val.name and 'SelfAttention/g/batch_norm' not in val.name and 'SelfAttention/f/batch_norm' not in val.name and 'SelfAttention/h/batch_norm' not in val.name and 'SelfAttention/g/prelu' not in val.name and 'SelfAttention/f/prelu' not in val.name and 'SelfAttention/h/prelu' not in val.name and 'SelfAttention/DecoupledOperator' not in val.name and 'zsc_pred' not in val.name]
         
         self.saver = tf.train.Saver(var_list=var_list,max_to_keep=max_to_keep)
         
@@ -160,17 +161,17 @@ class Train:
         # Loading the model checkpoint if exists
         self.__load_model()
         
-        summary_dir = os.path.join(os.getcwd(),'logs',Detection_or_Classifier)
-        if not os.path.exists(summary_dir):
-            os.makedirs(summary_dir)
-        summary_dir_train = os.path.join(summary_dir,'train')
-        if not os.path.exists(summary_dir_train):
-            os.makedirs(summary_dir_train)
-        summary_dir_test = os.path.join(summary_dir,'test')
-        if not os.path.exists(summary_dir_test):
-            os.makedirs(summary_dir_test)
-        self.train_writer = tf.summary.FileWriter(summary_dir_train,sess.graph)
-        self.test_writer = tf.summary.FileWriter(summary_dir_test)
+        #summary_dir = os.path.join(os.getcwd(),'logs',Detection_or_Classifier)
+        #if not os.path.exists(summary_dir):
+        #    os.makedirs(summary_dir)
+        #summary_dir_train = os.path.join(summary_dir,'train')
+        #if not os.path.exists(summary_dir_train):
+        #    os.makedirs(summary_dir_train)
+        #summary_dir_test = os.path.join(summary_dir,'test')
+        #if not os.path.exists(summary_dir_test):
+        #    os.makedirs(summary_dir_test)
+        #self.train_writer = tf.summary.FileWriter(summary_dir_train,sess.graph)
+        #self.test_writer = tf.summary.FileWriter(summary_dir_test)
 
     ############################################################################################################
     # Model related methods
@@ -237,10 +238,12 @@ class Train:
                                  self.model.is_training: 1.0
                                  }
                                  
-                    _, loss, acc, summaries_merged = self.sess.run(
-                    [self.model.train_op, self.model.all_loss, self.model.accuracy, self.model.summaries_merged],
+                    #_, loss, acc, summaries_merged = self.sess.run(
+                    #[self.model.train_op, self.model.all_loss, self.model.accuracy, self.model.summaries_merged],
+                    #feed_dict=feed_dict)
+                    _, loss, acc = self.sess.run(
+                    [self.model.train_op, self.model.all_loss, self.model.accuracy],
                     feed_dict=feed_dict)
-                    
                     print('loss:' + str(loss)+'|'+'accuracy:'+str(acc))
                     
                     loss_list += [loss]
@@ -249,7 +252,7 @@ class Train:
                     self.model.global_step_assign_op.eval(session=self.sess,
                                                           feed_dict={self.model.global_step_input: cur_step + 1})
 
-                    self.train_writer.add_summary(summaries_merged,cur_step)
+                    #self.train_writer.add_summary(summaries_merged,cur_step)
 
                     if batch > self.train_data.__len__():
                         batch = 0
@@ -268,7 +271,7 @@ class Train:
                         #flops = tf.profiler.profile(tf.get_default_graph(), run_meta=tf.RunMetadata(), cmd='op', options=opts)
                         #if flops is not None:
                         #    print('flops:{}'.format(flops.total_float_ops))
-                    
+                        '''
                         run_options = tf.RunOptions(trace_level=tf.RunOptions.FULL_TRACE)
                         run_metadata = tf.RunMetadata()
                         
@@ -279,7 +282,8 @@ class Train:
                         
                         self.train_writer.add_run_metadata(run_metadata, 'epoch{}batch{}'.format(cur_epoch,cur_step))
                         self.train_writer.add_summary(summaries_merged, cur_step)
-
+                        '''
+                        pass
                     batch += 1
                 
                 if cur_epoch % save_model_every == 0 and cur_epoch != 0:
@@ -294,7 +298,7 @@ class Train:
                     x_batch, anchors_batch,t_batch, yolo_1, yolo_2, yolo_3 = input_list
 
                     print('hide image')
-                    S_ratio = 8
+                    S_ratio = 32
                     S = x_batch.shape[1]/S_ratio
                     for _batch in range(x_batch.shape[0]):
                         IndexList = []
@@ -318,8 +322,11 @@ class Train:
                                  self.model.true_yolo_3:yolo_3
                                  }
                     
-                    _, loss, summaries_merged = self.sess.run(
-                        [self.model.train_op, self.model.all_loss, self.model.summaries_merged],
+                    #_, loss, summaries_merged = self.sess.run(
+                    #    [self.model.train_op, self.model.all_loss, self.model.summaries_merged],
+                    #    feed_dict=feed_dict)
+                    _, loss = self.sess.run(
+                        [self.model.train_op, self.model.all_loss],
                         feed_dict=feed_dict)
                     
                     loss_list += [loss]
@@ -327,7 +334,7 @@ class Train:
                     self.model.global_step_assign_op.eval(session=self.sess,
                                                           feed_dict={self.model.global_step_input: cur_step + 1})
 
-                    self.train_writer.add_summary(summaries_merged,cur_step)
+                    #self.train_writer.add_summary(summaries_merged,cur_step)
 
                     if batch > self.train_data.__len__():
                         batch = 0
@@ -345,7 +352,7 @@ class Train:
                         #flops = tf.profiler.profile(tf.get_default_graph(), run_meta=tf.RunMetadata(), cmd='op', options=opts)
                         #if flops is not None:
                         #    print('flops:{}'.format(flops.total_float_ops))
-                    
+                        '''
                         run_options = tf.RunOptions(trace_level=tf.RunOptions.FULL_TRACE)
                         run_metadata = tf.RunMetadata()
                         
@@ -356,7 +363,8 @@ class Train:
                         
                         self.train_writer.add_run_metadata(run_metadata, 'epoch{}batch{}'.format(cur_epoch,cur_step))
                         self.train_writer.add_summary(summaries_merged, cur_step)
-
+                        '''
+                        pass
                     batch += 1
                 
                 if cur_epoch % save_model_every == 0 and cur_epoch != 0:
@@ -384,17 +392,17 @@ class Train:
 
                 image = cv2.imread(image_path)
                 image_h,image_w,_ = image.shape
-                _image = cv2.resize(image,(32*9,32*9))[np.newaxis,:,:,::-1]
+                _image = cv2.resize(image,(32*10,32*10))[np.newaxis,:,:,::-1]
                 infos = self.sess.run(self.model.infos,
                                           feed_dict={self.model.input_image:_image,
                                                      self.model.is_training:0.0,
                                                      self.model.original_wh:[[image_w,image_h]]
                                                      }
                                           )
-                infos = self.model.do_nms(infos,0.4)
+                infos = self.model.do_nms(infos,0.3)
                 image = self.draw_boxes(image, infos.tolist(), labels)
                 cv2.imwrite(os.path.join(os.getcwd(),'test_results',Detection_or_Classifier,image_name),image)
-    def draw_boxes(self,image, boxes, labels, obj_thresh=0.5):
+    def draw_boxes(self,image, boxes, labels, obj_thresh=0.8):
         def _constrain(min_v, max_v, value):
             if value < min_v: return min_v
             if value > max_v: return max_v
